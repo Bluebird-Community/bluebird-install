@@ -237,8 +237,8 @@ installPostgres() {
 # Install OpenNMS Debian repository for specific release
 installOnmsRepo() {
   echo "Install Horizon Repository            ... "
-  curl -1sLf 'https://packages.opennms.com/public/stable/setup.deb.sh' | sudo -E bash
-  curl -1sLf 'https://packages.opennms.com/public/common/setup.deb.sh' | sudo -E bash
+  curl -1sLf 'https://dl.cloudsmith.io/public/bluebird/develop/setup.deb.sh' | sudo -E bash
+  curl -1sLf 'https://dl.cloudsmith.io/public/bluebird/common/setup.deb.sh' | sudo -E bash
 }
 
 ####

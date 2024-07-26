@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Script to bootstrap a basic OpenNMS setup
+# Script to bootstrap a basic Bluebird Core setup
 
 set -eEuo pipefail
 trap 's=$?; echo >&2 "$0: Error on line "$LINENO": $BASH_COMMAND"; exit $s' ERR
@@ -10,10 +10,10 @@ DEBIAN_FRONTEND=noninteractive
 ERROR_LOG="bootstrap.log"
 POSTGRES_USER="postgres"
 POSTGRES_PASS=""
-DB_NAME="opennms"
-DB_USER="opennms"
-DB_PASS="opennms"
-OPENNMS_HOME="/usr/share/opennms"
+DB_NAME="bluebird"
+DB_USER="bluebird"
+DB_PASS="bluebird"
+BLUEBIRD_CORE_HOME="/usr/share/opennms"
 ANSWER="No"
 RED="\e[31m"
 GREEN="\e[32m"
@@ -31,14 +31,14 @@ E_UNSUPPORTED=128
 # Help function used in error messages and -h option
 usage() {
   echo ""
-  echo "Bootstrap OpenNMS basic setup on Debian based system."
+  echo "Bootstrap Bluebird Core setup on Debian based system."
   echo ""
   echo "-h: Show this help"
 }
 
 checkRequirements() {
   echo "#############"
-  echo "Welcome to the OpenNMS Horizon installer 👋"
+  echo "🪺 Welcome to the Bluebird Core installer 👋"
   echo "##########"
   echo ""
 
@@ -67,19 +67,19 @@ checkRequirements() {
 
 showDisclaimer() {
   echo ""
-  echo "This script installs OpenNMS on a clean system with the following."
+  echo "This script installs Bluebird Core on a clean system with the following."
   echo "components:"
   echo ""
   echo " - Installing installer dependencies curl, gnupg2, apt-transport-https"
   echo " - OpenJDK Development Kit"
   echo " - PostgreSQL Server"
   echo " - Initializing database access with credentials"
-  echo " - OpenNMS Repositories"
-  echo " - OpenNMS with core services and web application"
-  echo " - Initializing and bootstrapping the OpenNMS database schema"
-  echo " - Start OpenNMS"
+  echo " - Bluebird Repositories"
+  echo " - Bluebird Core services with the web application"
+  echo " - Initializing and bootstrapping the Bluebird database schema"
+  echo " - Start Bluebird Core"
   echo ""
-  echo "If you have OpenNMS already installed, don't use this script!"
+  echo "If you have Bluebird Core already installed, don't use this script!"
   echo ""
   echo "If you get any errors during the install procedure please visit the"
   echo "bootstrap.log where you can find detailed error messages for"
@@ -87,7 +87,7 @@ showDisclaimer() {
   echo ""
   echo "Bugs or enhancements can be reported here:"
   echo ""
-  echo " - https://github.com/opennms-forge/opennms-install/issues -"
+  echo " - https://github.com/Bluebird-Community/opennms-install/issues -"
   echo ""
   read -r -p "If you want to proceed, type YES: " ANSWER
 
@@ -111,7 +111,7 @@ showDisclaimer() {
 }
 
 ####
-# The -r option is optional and allows to set the release of OpenNMS.
+# The -r option is optional and allows to set the release of Bluebird.
 # The -m option allows to overwrite the package repository server.
 while getopts h flag; do
   case "${flag}" in
@@ -153,7 +153,7 @@ prepare() {
 
 ####
 # Helper to request Postgres credentials to initialize the
-# OpenNMS database.
+# Bluebird database.
 queryDbCredentials() {
   echo ""
   echo "Set a Postgres root password"
@@ -173,12 +173,12 @@ queryDbCredentials() {
   done
   echo ""
   echo ""
-  echo "Create OpenNMS Horizon database with user credentials"
+  echo "Create Bluebird Core database with user credentials"
   echo ""
-  read -r -p    "Database name for OpenNMS Horizon (default: opennms): " DB_NAME
-  DB_NAME="${DB_NAME:-opennms}"
-  read -r -p    "User for the database (default: opennms): " DB_USER
-  DB_USER="${DB_USER:-opennms}"
+  read -r -p    "Database name for Bluebird Core (default: bluebird): " DB_NAME
+  DB_NAME="${DB_NAME:-bluebird}"
+  read -r -p    "User for the database (default: bluebird): " DB_USER
+  DB_USER="${DB_USER:-bluebird}"
   while true; do
     read -r -s -p "New password: " DB_PASS
     echo ""
@@ -188,7 +188,7 @@ queryDbCredentials() {
       [ "${DB_PASS}" = "${DB_PASS_CONFIRM}" ] && break
       echo "Password confirmation didn't match, please try again."
     else
-      echo "Password for the OpenNMS database user can't be empty. Please set a password."
+      echo "Password for the Bluebird Core database user can't be empty. Please set a password."
     fi
     echo ""
   done
@@ -234,33 +234,33 @@ installPostgres() {
 }
 
 ####
-# Install OpenNMS Debian repository for specific release
-installOnmsRepo() {
-  echo "Install Horizon Repository            ... "
+# Install Bluebird Debian repository for specific release
+installRepo() {
+  echo "Install Bluebird Repository              ... "
   curl -1sLf 'https://dl.cloudsmith.io/public/bluebird/develop/setup.deb.sh' | sudo -E bash
   curl -1sLf 'https://dl.cloudsmith.io/public/bluebird/common/setup.deb.sh' | sudo -E bash
 }
 
 ####
-# Install the OpenNMS application from Debian repository
-installOnmsApp() {
-  echo -n "Install OpenNMS Horizon packages      ... "
+# Install the Bluebird Core application from Debian repository
+installCore() {
+  echo -n "Install Bluebird Core packages        ... "
   sudo apt-get install -y -qq rrdtool jrrd2 jicmp jicmp6 opennms opennms-webapp-hawtio 2>>"${ERROR_LOG}"
-  sudo -u opennms "${OPENNMS_HOME}"/bin/runjava -s 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
+  sudo -u opennms "${BLUEBIRD_CORE_HOME}"/bin/runjava -s 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
   checkError "${?}"
 }
 
 ####
-# Generate OpenNMS configuration file for accessing the PostgreSQL
+# Generate Bluebird configuration file for accessing the PostgreSQL
 # Database with credentials
 setCredentials() {
   echo ""
   echo -n "Create secure vault for Postgres      ... "
-  sudo -u opennms ${OPENNMS_HOME}/bin/scvcli set postgres "${DB_USER}" "${DB_PASS}" 1>/dev/null 2>>"${ERROR_LOG}"
-  sudo -u opennms ${OPENNMS_HOME}/bin/scvcli set postgres-admin "${POSTGRES_USER}" "${POSTGRES_PASS}" 1>/dev/null 2>>"${ERROR_LOG}"
+  sudo -u opennms ${BLUEBIRD_CORE_HOME}/bin/scvcli set postgres "${DB_USER}" "${DB_PASS}" 1>/dev/null 2>>"${ERROR_LOG}"
+  sudo -u opennms ${BLUEBIRD_CORE_HOME}/bin/scvcli set postgres-admin "${POSTGRES_USER}" "${POSTGRES_PASS}" 1>/dev/null 2>>"${ERROR_LOG}"
   checkError "${?}"
-  echo -n "Generate OpenNMS database config      ... "
-  if [[ -f "${OPENNMS_HOME}"/etc/opennms-datasources.xml ]]; then
+  echo -n "Generate Bluebird database config     ... "
+  if [[ -f "${BLUEBIRD_CORE_HOME}"/etc/opennms-datasources.xml ]]; then
     printf '<?xml version="1.0" encoding="UTF-8"?>
 <datasource-configuration xmlns:this="http://xmlns.opennms.org/xsd/config/opennms-datasources"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -305,34 +305,34 @@ setCredentials() {
                      maxSize="50" />
   </jdbc-data-source>
 </datasource-configuration>' "${DB_NAME}" "${DB_NAME}" \
-  | sudo -u opennms tee "${OPENNMS_HOME}"/etc/opennms-datasources.xml 1>>/dev/null 2>>"${ERROR_LOG}"
+  | sudo -u opennms tee "${BLUEBIRD_CORE_HOME}"/etc/opennms-datasources.xml 1>>/dev/null 2>>"${ERROR_LOG}"
   checkError "${?}"
   else
-    echo "No OpenNMS configuration found in ${OPENNMS_HOME}/etc"
+    echo "No Bluebird configuration found in ${BLUEBIRD_CORE_HOME}/etc"
     exit "${E_ILLEGAL_ARGS}"
   fi
 }
 
 ####
-# Initialize the OpenNMS database schema
-initializeOnmsDb() {
-  echo -n "Initialize OpenNMS                    ... "
-  sudo "${OPENNMS_HOME}"/bin/install -dis 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
+# Initialize the Bluebird database schema
+initializeDb() {
+  echo -n "Initialize Bluebird                   ... "
+  sudo "${BLUEBIRD_CORE_HOME}"/bin/install -dis 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
   checkError "${?}"
   echo -n "Set RRDTool as time series backend    ... "
   printf 'org.opennms.rrd.strategyClass=org.opennms.netmgt.rrd.rrdtool.MultithreadedJniRrdStrategy
 org.opennms.rrd.interfaceJar=/usr/share/java/jrrd2.jar
 opennms.library.jrrd2=/usr/lib/jni/libjrrd2.so
 org.opennms.web.graphs.engine=rrdtool
-rrd.binary=/usr/bin/rrdtool\n' | sudo -u opennms tee ${OPENNMS_HOME}/etc/opennms.properties.d/rrdtool-backend.properties 1>>/dev/null 2>>"${ERROR_LOG}"
+rrd.binary=/usr/bin/rrdtool\n' | sudo -u opennms tee ${BLUEBIRD_CORE_HOME}/etc/opennms.properties.d/rrdtool-backend.properties 1>>/dev/null 2>>"${ERROR_LOG}"
   checkError "${?}"
 }
 
-restartOnms() {
-  echo -n "Starting OpenNMS                      ... "
+restartCore() {
+  echo -n "Starting Bluebird Core                ... "
   sudo systemctl start opennms 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
   checkError "${?}"
-  echo -n "OpenNMS systemd enable                ... "
+  echo -n "Bluebird systemd enable               ... "
   sudo systemctl enable opennms 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
   checkError "${?}"
 }
@@ -355,18 +355,18 @@ installJdk
 installPostgres
 queryDbCredentials
 setDbCredentials
-installOnmsRepo
-installOnmsApp
+installRepo
+installCore
 setCredentials
-initializeOnmsDb
+initializeDb
 lockdownDbUser
-restartOnms
+restartCore
 
 echo ""
 echo "Congratulations"
 echo "---------------"
 echo ""
-echo "OpenNMS is starting up and might take a few seconds. You can access the"
+echo "Bluebird Core is starting up and might take a few seconds. You can access the"
 echo "web application with"
 echo ""
 echo "  http://$(hostname -I | awk '{print $1}'):8980"
